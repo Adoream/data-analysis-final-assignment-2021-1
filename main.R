@@ -1,6 +1,5 @@
+library(dplyr)
 library(ggplot2)
-library(plyr)
-library(ROCR)
 
 # 导入数据
 adult <- read.table(
@@ -78,4 +77,3 @@ set.seed(23333)
 adult.index <- sample(nrow(adult), nrow(adult) * 0.7)
 adult.train <- adult[adult.index, ]
 adult.test <- adult[-adult.index, ]
-
