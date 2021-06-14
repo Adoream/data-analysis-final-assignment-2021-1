@@ -29,13 +29,18 @@ adult.temp.test <- read.table(
 
 adult.data <- rbind(adult.temp.train, adult.temp.test)
 
-
 adult.data$education <- NULL
 adult.data$fnlwgt <- NULL
 adult.data$relationship <- NULL
 
+adult.int.var <- colnames(adult.data)[which(sapply(adult.data, class) == 'integer')]
+adult.fac.var <- colnames(adult.data)[which(sapply(adult.data, class) == 'factor')]
+adult.data <- as.data.frame(lapply(adult.data, function(x) ifelse(x == "?", "Unknown", as.character(x))))
+for(i in adult.int.var) {
+  adult.data[i] <- as.numeric(unlist(adult.data[i]))
+}
+
 # Combine Work
-levels(adult.data$workclass)[1] <- "Unknown"
 adult.data$workclass <- gsub("^Federal-gov", "Government", adult.data$workclass)
 adult.data$workclass <- gsub("^Local-gov", "Government", adult.data$workclass)
 adult.data$workclass <- gsub("^State-gov", "Government", adult.data$workclass)
@@ -49,7 +54,6 @@ adult.data$workclass <- as.factor(adult.data$workclass)
 summary(adult.data$workclass)
 
 # Combine Occupation
-levels(adult.data$occupation)[1] <- "Unknown"
 adult.data$occupation <- gsub("Adm-clerical", "White-Collar", adult.data$occupation)
 adult.data$occupation <- gsub("Craft-repair", "Blue-Collar", adult.data$occupation)
 adult.data$occupation <- gsub("Exec-managerial", "White-Collar", adult.data$occupation)
