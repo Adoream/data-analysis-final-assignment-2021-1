@@ -160,9 +160,9 @@ ggplot(adult.data.race.df, aes(x = race, y = count, fill = income)) +
   geom_text(aes(y = pos, label = label), size = 2, position=position_stack(vjust = 0)) + 
   ggtitle('Income Level by Race')
 
+summary(adult.data)
+
 set.seed(23333)
 adult.index <- sample(nrow(adult.data), nrow(adult.data) * 0.7)
 adult.train <- adult.data[adult.index, ]
 adult.test <- adult.data[-adult.index, ]
-
-data("Adult")
