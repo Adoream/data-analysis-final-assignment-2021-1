@@ -25,8 +25,6 @@ native-country：表示样本来自哪个国家；
 income：样本的收入，这里的收入有大于50K和小于等于50K
 ```
 
-
-
 -------
 
 ## 数据预处理
@@ -355,6 +353,8 @@ ggplot(adult.data.marital.df, aes(x = marital_status, y = count, fill = income))
 
 可以发此次的调查中主要以白种人为主
 
+最后预览一下整体的数据
+
 ```R
 summary(adult.data)
 ```
@@ -386,13 +386,17 @@ summary(adult.data)
 # (Other)      : 2517 
 ```
 
+最后是切割数据集，将训练数据与测试数据按照 3:7 的比例进行分割
 
+```R
+set.seed(23333)
+adult.index <- sample(nrow(adult.data), nrow(adult.data) * 0.7)
+adult.train <- adult.data[adult.index, ]
+adult.test <- adult.data[-adult.index, ]
+```
 
+得到训练数据为 34,188 条，测试数据为 14,652 条
 
+------
 
-
-
-
-
-
-
+## 模型训练
