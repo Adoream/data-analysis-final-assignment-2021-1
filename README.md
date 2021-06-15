@@ -400,3 +400,86 @@ adult.test <- adult.data[-adult.index, ]
 ------
 
 ## 模型训练
+
+### ANN
+
+首先先使用 ANN 来预测的年收入是否超过 50K USD， 模型在训练集上训练并在测试集上验证。首先，训练具有一个隐藏层的人工神经网络 (ANN)。 尽管只有 11 个输入变量，但其中许多是分类变量，会产生较多虚变量。 因此，隐藏节点的数量选择为 40，最小二乘法用于优化目标函数，最大迭代次数设置为 5,000。
+
+```R
+library(nnet)
+adult.nn <- nnet(income ~ ., data = adult.train, size = 40, maxit = 500, MaxNWts = 2601)
+```
+
+```R
+# # weights:  2601
+# initial  value 52120.185242 
+# iter  10 value 15552.059189
+# iter  20 value 14421.361912
+# iter  30 value 13271.253019
+# iter  40 value 12496.316135
+# iter  50 value 12172.354951
+# iter  60 value 11901.846632
+# iter  70 value 11779.494264
+# iter  80 value 11627.917054
+# iter  90 value 11441.503651
+# iter 100 value 11281.892003
+# iter 110 value 11192.189916
+# iter 120 value 11087.418463
+# iter 130 value 10939.808253
+# iter 140 value 10859.531186
+# iter 150 value 10754.086877
+# iter 160 value 10675.936043
+# iter 170 value 10600.975360
+# iter 180 value 10505.529872
+# iter 190 value 10423.231567
+# iter 200 value 10340.202806
+# iter 210 value 10300.016357
+# iter 220 value 10238.036887
+# iter 230 value 10187.300882
+# iter 240 value 10131.828147
+# iter 250 value 10085.325149
+# iter 260 value 10047.710247
+# iter 270 value 10045.277823
+# iter 280 value 10042.812999
+# iter 290 value 10039.824645
+# iter 300 value 10037.224278
+# iter 310 value 10035.019297
+# iter 320 value 10032.227456
+# iter 330 value 10029.413206
+# iter 340 value 10021.152807
+# iter 350 value 10013.435598
+# iter 360 value 10005.295497
+# iter 370 value 9993.348291
+# iter 380 value 9985.572948
+# iter 390 value 9977.779599
+# iter 400 value 9969.156118
+# iter 410 value 9956.745958
+# iter 420 value 9944.981710
+# iter 430 value 9929.263521
+# iter 440 value 9910.805861
+# iter 450 value 9891.476112
+# iter 460 value 9871.896602
+# iter 470 value 9845.841540
+# iter 480 value 9813.545272
+# iter 490 value 9785.832663
+# iter 500 value 9767.999631
+# final  value 9767.999631 
+# stopped after 500 iterations
+```
+
+```R
+adult.nn.pred <- predict(adult.nn, select(adult.test, -income), type = 'raw')
+adult.nn.pred.tr <- rep('<=50K', length(adult.nn.pred))
+adult.nn.pred.tr[adult.nn.pred.tr >= .5] <- '>50K'
+adult.nn.pred.table <- table(adult.nn.pred.tr, adult.test$income)
+print(adult.nn.pred.table)
+sum(diag(adult.nn.pred.table))/sum(adult.nn.pred.table)
+```
+
+```R
+# adult.nn.pred.tr <=50K  >50K
+#             >50K 11150  3502
+```
+
+ANN 的预测结果准确率为 `76.10%`，错误率为 `23.90%`。
+
