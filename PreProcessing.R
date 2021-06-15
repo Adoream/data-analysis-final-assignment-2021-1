@@ -39,6 +39,7 @@ adult.data <- as.data.frame(lapply(adult.data, function(x) ifelse(x == "?", "Unk
 for(i in adult.int.var) {
   adult.data[i] <- as.numeric(unlist(adult.data[i]))
 }
+rm(i)
 
 # Combine Work
 adult.data$workclass <- gsub("^Federal-gov", "Government", adult.data$workclass)
