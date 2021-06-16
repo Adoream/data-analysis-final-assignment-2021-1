@@ -483,3 +483,283 @@ sum(diag(adult.nn.pred.table))/sum(adult.nn.pred.table)
 
 ANN 的预测结果准确率为 `76.10%`，错误率为 `23.90%`。
 
+### CART（决策树）
+
+CART 算法是一个二叉树算法，在生长过程采用的是最大基尼增益指数
+
+```R
+library(rpart)
+library(rpart.plot)
+
+adult.rpart <- rpart(income ~ ., data = adult.train, method = 'class')
+rpart.plot(adult.rpart)
+adult.rpart.pred.prob <- predict(adult.rpart, select(adult.test, -income), type = 'prob')
+adult.rpart.pred <- predict(adult.rpart, select(adult.test, -income), type = 'class')
+adult.rpart.pred.table <- table(adult.rpart.pred, adult.test$income)
+sum(diag(adult.rpart.pred.table))/sum(adult.rpart.pred.table)
+```
+
+![DecisionTree](README.assets/DecisionTree.png)
+
+```R
+# adult.rpart.pred <=50K  >50K
+#           <=50K 10448  1739
+#           >50K    702  1763
+```
+
+CART 算法的预测结果准确率为 `83.34%`，错误率为 `16.66%`。
+
+### C5.0（决策树）
+
+C5.0算法是一种多叉树算法，生长过程采用的是最大信息增益率原则进行节点选择和分裂点的选择
+
+```R
+library(C50)
+
+adult.c50 <- C5.0(income ~ ., data = adult.train,  trials = 10)
+adult.c50.pred.prob <- predict(adult.c50, select(adult.test, -income), type = 'prob')
+adult.c50.pred <- predict(adult.c50, select(adult.test, -income), type = 'class')
+adult.c50.pred.table <- table(adult.c50.pred, adult.test$income)
+sum(diag(adult.c50.pred.table))/sum(adult.c50.pred.table)
+```
+
+```R
+# adult.c50.pred <=50K  >50K
+#         <=50K 10528  1385
+#         >50K    622  2117
+```
+
+C5.0 算法的预测结果准确率为 `86.30%`，错误率为 `13.70%`。
+
+### Random Forest（随机森林）
+
+随机森林 (RF) 是一个强大的机器学习工具，它通过生成大量自举树来提高预测准确性，最终预测结果是通过组合所有树的结果来获得的。
+
+```R
+library(randomForest)
+
+adult.rf <- randomForest(income ~ ., data = adult.train, ntree = 1000)
+adult.rf.pred.prob <- predict(adult.rf, select(adult.test, -income), type = 'prob')
+adult.rf.pred <- predict(adult.rf, select(adult.test, -income), type = 'class')
+adult.rf.pred.table <- table(adult.rf.pred, adult.test$income)
+sum(diag(adult.rf.pred.table))/sum(adult.rf.pred.table)
+```
+
+```R
+# adult.rf.pred <=50K  >50K
+#        <=50K 10421  1376
+#        >50K    729  2126
+```
+
+随机森林的预测结果准确率为 `85.63%`，错误率为 `14.37%`。
+
+### SVM（支持向量机）
+
+然后使用支持向量机（SVM）来预测收入水平。 SVM 是一种判别分类器，它在用于分类的高维空间中构造超平面。
+
+```R
+library(e1071)
+
+adult.svm <- svm(income ~ ., data = adult.train, decision.values = TRUE)
+adult.svm.pred.prob <- attributes(predict(adult.svm, select(adult.test, -income), decision.values = TRUE))$decision.values
+adult.svm.pred <- predict(adult.svm, select(adult.test, -income))
+adult.svm.pred.table <- table(adult.svm.pred, adult.test$income)
+sum(diag(adult.svm.pred.table))/sum(adult.svm.pred.table)
+```
+
+```R
+# adult.svm.pred <=50K  >50K
+#         <=50K 10300  1520
+#         >50K    850  1982
+```
+
+支持向量机的预测结果准确率为 `83.82%`，错误率为 `16.18%`。
+
+### KNN （K-近邻算法）
+
+通过这个数据的 K 个最近的邻居来判断该数据类别
+
+```R
+library(kknn)
+
+adult.knn <- kknn(income ~ ., train = adult.train, test = adult.test, k = 7, distance = 2)
+adult.knn.pred <- fitted(adult.knn)
+adult.knn.pred.table <- table(adult.knn.pred, adult.test$income)
+sum(diag(adult.knn.pred.table))/sum(adult.knn.pred.table)
+```
+
+```R
+# adult.svm.pred <=50K  >50K
+#         <=50K 10300  1520
+#         >50K    850  1982
+```
+
+K-近邻算法的预测结果准确率为 `83.40%`，错误率为 `16.60%`。
+
+### NaiveBayes（朴素贝叶斯）
+
+朴素贝叶斯法是基于贝叶斯定理与特征条件独立假设的分类方法。对于给定的训练集数据，首先基于特征条件独立假设学习输入输出的联合概率分布；然后基于此模型，对给定的输入 x，利用贝叶斯定理求出后验概率最大的输出 y，朴素贝叶斯法实现简单，学习和预测效率都很高，是一种常用的方法。
+
+而其公式为 
+$$
+y=f(x)=\mathop{\arg\max}_{c_k}\prod{P(X^{(j)}=x^{(j)}|Y=c_k)}
+$$
+
+```R
+library(e1071)
+
+adult.nb <- naiveBayes(x = adult.train[, 1:11], y = adult.train$income, decision.values = TRUE)
+adult.nb.pred <- predict(adult.nb, select(adult.test, -income))
+adult.nb.pred.table <- table(adult.nb.pred, adult.test$income)
+sum(diag(adult.nb.pred.table))/sum(adult.nb.pred.table)
+```
+
+```R
+# adult.nb.pred <=50K  >50K
+#         <=50K 10366  2065
+#         >50K    784  1437
+```
+
+朴素贝叶斯的预测结果准确率为 `80.56%`，错误率为 `19.44%`。
+
+### XGBoost
+
+XGboost 全名为 eXtreme Gradient Boosting (极限梯度提升)，XGBoost 主要是用来解决有监督学习问题
+
+```R
+library(Matrix)
+library(xgboost)
+
+adult.xgb.matrix.train <- sparse.model.matrix(income ~ ., data = adult.train)
+adult.xgb.matrix.train.Y <- as.numeric(adult.train$income) - 1
+adult.xgb.matrix.test <- sparse.model.matrix(income ~ ., data = adult.test)
+adult.xgb <- xgboost(
+  data = adult.xgb.matrix.train,
+  label = adult.xgb.matrix.train.Y,
+  max.depth = 4,
+  eta = 0.5,
+  lambda = 0.7,
+  min_child_weight = 10,
+  eval_metric = 'auc',
+  nthread = 3,
+  nround = 100,
+  objective = "binary:logistic"
+)
+adult.xgb.pred.prob <- predict(adult.xgb, adult.xgb.matrix.test, type = 'prob')
+adult.xgb.pred <- predict(adult.xgb, adult.xgb.matrix.test)
+adult.xgb.pred.table <- table(ifelse(adult.xgb.pred > 0.5, 1, 0), as.numeric(na.omit(adult.test)$income))
+sum(diag(adult.xgb.pred.table))/sum(adult.xgb.pred.table)
+```
+
+```R
+#        1     2
+#  0 10468  1287
+#  1   682  2215
+```
+
+XGBoost 的预测结果准确率为 `86.56%`，错误率为 `13.44%`。
+
+## 结论
+
+ROC 曲线是在所有阈值下真阳性率与假阳性率的关系图。使用 ROC 曲线比较五个不同的分类器。
+
+```R
+library(plyr)
+library(ROCR)
+
+# ANN
+adult.nn.pr <- prediction(adult.nn.pred, adult.test$income)
+adult.nn.prf <- performance(adult.nn.pr, measure = "tpr", x.measure = "fpr")
+adult.nn.dd <- data.frame(FP = adult.nn.prf@x.values[[1]], TP = adult.nn.prf@y.values[[1]])
+
+# CART
+adult.cart.pr <- prediction(adult.cart.pred.prob[, 2], adult.test$income)
+adult.cart.prf <- performance(adult.cart.pr, measure = "tpr", x.measure = "fpr")
+adult.cart.dd <- data.frame(FP = adult.cart.prf@x.values[[1]], TP = adult.cart.prf@y.values[[1]])
+
+# Random Forest
+adult.rf.pr <- prediction(adult.rf.pred.prob[, 2], adult.test$income)
+adult.rf.prf <- performance(adult.rf.pr, measure = "tpr", x.measure = "fpr")
+adult.rf.dd <- data.frame(FP = adult.rf.prf@x.values[[1]], TP = adult.rf.prf@y.values[[1]])
+
+# SVM
+adult.svm.pr <- prediction(adult.svm.pred.prob, adult.test$income)
+adult.svm.prf <- performance(adult.svm.pr, measure = "tpr", x.measure = "fpr")
+adult.svm.dd <- data.frame(FP = adult.svm.prf@x.values[[1]], TP = adult.svm.prf@y.values[[1]])
+
+# C50
+adult.c50.pr <- prediction(adult.c50.pred.prob[, 2], adult.test$income)
+adult.c50.prf <- performance(adult.c50.pr, measure = "tpr", x.measure = "fpr")
+adult.c50.dd <- data.frame(FP = adult.c50.prf@x.values[[1]], TP = adult.c50.prf@y.values[[1]])
+
+# KNN
+adult.knn.pr <- prediction(as.numeric(adult.knn.pred), adult.test$income)
+adult.knn.prf <- performance(adult.knn.pr, measure = "tpr", x.measure = "fpr")
+adult.knn.dd <- data.frame(FP = adult.knn.prf@x.values[[1]], TP = adult.knn.prf@y.values[[1]])
+
+# Naive Bayes
+adult.nb.pr <- prediction(as.numeric(adult.nb.pred), adult.test$income)
+adult.nb.prf <- performance(adult.knn.pr, measure = "tpr", x.measure = "fpr")
+adult.nb.dd <- data.frame(FP = adult.knn.prf@x.values[[1]], TP = adult.knn.prf@y.values[[1]])
+
+# XGBoost
+adult.xgb.pr <- prediction(adult.xgb.pred.prob, adult.test$income)
+adult.xgb.prf <- performance(adult.xgb.pr, measure = "tpr", x.measure = "fpr")
+adult.xgb.dd <- data.frame(FP = adult.xgb.prf@x.values[[1]], TP = adult.xgb.prf@y.values[[1]])
+
+
+adult.roc <- ggplot() + 
+  geom_line(data = adult.nn.dd, aes(x = FP, y = TP, color = 'Neural Networks')) + 
+  geom_line(data = adult.cart.dd, aes(x = FP, y = TP, color = 'CART')) + 
+  geom_line(data = adult.rf.dd, aes(x = FP, y = TP, color = 'Random Forest')) +
+  geom_line(data = adult.svm.dd, aes(x = FP, y = TP, color = 'Support Vector Machine')) +
+  geom_line(data = adult.c50.dd, aes(x = FP, y = TP, color = 'C5.0 Classification')) +
+  geom_line(data = adult.knn.dd, aes(x = FP, y = TP, color = 'K-Nearest Neighbors')) +
+  geom_line(data = adult.nb.dd, aes(x = FP, y = TP, color = 'Naive Bayes')) +
+  geom_line(data = adult.xgb.dd, aes(x = FP, y = TP, color = 'XGBoost')) +
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1)) +
+  ggtitle('ROC Curve') + 
+  labs(x = 'False Positive Rate', y = 'True Positive Rate') 
+
+adult.roc + scale_colour_manual(name = 'Classifier', values = c(
+  'Neural Networks' = '#F4A8D7', 
+  'CART' = '#DEB8EE',
+  'Random Forest' = '#BEC8FC', 
+  'Support Vector Machine' = '#98D9FF',
+  'C5.0 Classification' = '#70E4FA',
+  'K-Nearest Neighbors' = '#59EEE7',
+  'Naive Bayes' = '#69F6CF',
+  'XGBoost' = '#8EF9B0'
+))
+```
+
+![ROC-Curve](README.assets/ROC-Curve.png)
+
+```R
+adult.auc <- rbind(performance(adult.nn.pr, measure = 'auc')@y.values[[1]],
+             performance(adult.cart.pr, measure = 'auc')@y.values[[1]],
+             performance(adult.rf.pr, measure = 'auc')@y.values[[1]],
+             performance(adult.svm.pr, measure = 'auc')@y.values[[1]],
+             performance(adult.c50.pr, measure = 'auc')@y.values[[1]],
+             performance(adult.knn.pr, measure = 'auc')@y.values[[1]],
+             performance(adult.nb.pr, measure = 'auc')@y.values[[1]],
+             performance(adult.xgb.pr, measure = 'auc')@y.values[[1]])
+rownames(adult.auc) <- (c('Neural Networks', 'Decision Tree', 'Random Forest',
+                    'Support Vector Machine', 'C5.0 Classification', 
+                    'K-Nearest Neighbors', 'Naive Bayes', 'XGBoost'))
+colnames(adult.auc) <- 'Area Under ROC Curve'
+round(adult.auc, 4)
+```
+
+```R
+#                        Area Under ROC Curve
+# Neural Networks                      0.8986
+# Decision Tree                        0.8265
+# Random Forest                        0.8887
+# Support Vector Machine               0.8816
+# C5.0 Classification                  0.9069
+# K-Nearest Neighbors                  0.7419
+# Naive Bayes                          0.6700
+# XGBoost                              0.9232
+```
+
