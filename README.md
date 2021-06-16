@@ -599,7 +599,23 @@ sum(diag(adult.knn.pred.table))/sum(adult.knn.pred.table)
 #         >50K    850  1982
 ```
 
-K-近邻算法的预测结果准确率为 `83.40%`，错误率为 `16.60%`。
+```R
+adult.knn.numeric <- NULL
+for (i in 1:50) {
+  adult.knn.numeric.for <- kknn(income ~ ., train = adult.train, test = adult.test, k = i, distance = 2)
+  adult.knn.numeric.for.pred <- fitted(adult.knn.numeric.for)
+  adult.knn.numeric.for.pred.table <- table(adult.knn.numeric.for.pred, adult.test$income)
+  adult.knn.numeric[i] <- sum(diag(adult.knn.numeric.for.pred.table)) / sum(adult.knn.numeric.for.pred.table)
+}
+rm(adult.knn.numeric.for, i)
+ggplot(data.frame(1:50, adult.knn.numeric[1:50]), aes(x = 1:50, y = adult.knn.numeric[1:50])) + geom_line(size = 0.8)
+```
+
+![Adult-knn-numeric.png](README.assets/Adult-knn-numeric.png)
+
+从上图可以看出当 `K = 50` 时，所预测的结果为最佳
+
+K-近邻算法的预测结果准确率为 `84.09%`，错误率为 `15.91%`。
 
 ### Naive Bayes（朴素贝叶斯）
 
