@@ -539,11 +539,16 @@ C5.0 算法的预测结果准确率为 `86.30%`，错误率为 `13.70%`。
 library(randomForest)
 
 adult.rf <- randomForest(income ~ ., data = adult.train, ntree = 1000)
+varImpPlot(adult.rf)
 adult.rf.pred.prob <- predict(adult.rf, select(adult.test, -income), type = 'prob')
 adult.rf.pred <- predict(adult.rf, select(adult.test, -income), type = 'class')
 adult.rf.pred.table <- table(adult.rf.pred, adult.test$income)
 sum(diag(adult.rf.pred.table))/sum(adult.rf.pred.table)
 ```
+
+![adult.rf](README.assets/adult.rf.png)
+
+上图显示的是平均减少的准确率，其中每个点即代表移除相应的特征后平均减少的准确率，故越高的变量越重要。不难看出，marital_status(婚姻状况)、age(年龄)较为重要。
 
 ```R
 # adult.rf.pred <=50K  >50K
@@ -596,7 +601,7 @@ sum(diag(adult.knn.pred.table))/sum(adult.knn.pred.table)
 
 K-近邻算法的预测结果准确率为 `83.40%`，错误率为 `16.60%`。
 
-### NaiveBayes（朴素贝叶斯）
+### Naive Bayes（朴素贝叶斯）
 
 朴素贝叶斯法是基于贝叶斯定理与特征条件独立假设的分类方法。对于给定的训练集数据，首先基于特征条件独立假设学习输入输出的联合概率分布；然后基于此模型，对给定的输入 x，利用贝叶斯定理求出后验概率最大的输出 y，朴素贝叶斯法实现简单，学习和预测效率都很高，是一种常用的方法。
 
@@ -763,3 +768,6 @@ round(adult.auc, 4)
 # XGBoost                              0.9232
 ```
 
+AUC 被定义为 ROC 曲线下与坐标轴围成的面积。AUC 越接近 1.0，检测方法的真实性越高；等于0.5时，则真实度越低，无应用价值。
+
+所以可以得出 XGBoost 算法的的真实性最好，Naive Bayes 的真实性最差
