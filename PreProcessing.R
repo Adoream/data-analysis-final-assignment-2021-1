@@ -38,7 +38,7 @@ adult.int.var <- colnames(adult.data)[which(sapply(adult.data, class) == 'intege
 adult.fac.var <- colnames(adult.data)[which(sapply(adult.data, class) == 'factor')]
 adult.data <- as.data.frame(lapply(adult.data, function(x) ifelse(x == "?", "Unknown", as.character(x))))
 for(i in adult.int.var) {
-  adult.data[i] <- as.numeric(unlist(adult.data[i]))
+  adult.data[i] <- as.numeric(as.character(unlist(adult.data[i])))
 }
 rm(i)
 
