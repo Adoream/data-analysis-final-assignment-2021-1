@@ -18,7 +18,7 @@ occupation：表示每个样本从事的职业；
 relationship：每个样本的家庭成员；
 race：样本的种族，有黑人和白人；
 gender：样本的性别；
-capital-gain：样本的税收；
+capital-gain：样本的资本收益；
 capital-loss：样本的资本损失；
 hours-per-week：样本每周工作时长；
 native-country：表示样本来自哪个国家；
