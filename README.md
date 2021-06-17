@@ -31,7 +31,7 @@ income：样本的收入，这里的收入有大于50K和小于等于50K
 
 成人数据集是一个广泛使用的标准机器学习数据集，用于探索和演示许多一般性的或专门为不平衡分类设计的机器学习算法。
 
-总共有 48842 行数据，3620 行含有缺失数据，45222 行具有完整的数据，其中缺失值用`?`标记。有 '>50K' 和 '<=50K' 两类标签数据，也就是说它是一个二分类任务。同时这些标签数据分布不平衡，'<=50K' 类标签相对比重更大。 
+总共有 48842 行数据，3620 行含有缺失数据，45222 行具有完整的数据，其中缺失值用`?`标记。有 '>50K' 和 '<=50K' 两类标签数据，也就是说它是一个二分类任务。同时这些标签数据分布不平衡，'<=50K' 类标签相对比重更大。
 
 具体的载入数据集方法使用 `read.csv` 。由于发现 `adult.data` 与 `adult.test` 中 `native_country` 的 `weight` 值不同，检查后发现两个数据都是完整的因此分别读取 `adult.data` 与 `adult.test` ，并合并后重新划分训练数据集与测试数据集。
 
@@ -399,9 +399,9 @@ adult.test <- adult.data[-adult.index, ]
 
 ------
 
-### Apriori
+### Association Rules（关联规则）
 
-关联规则(Association Rules)是反映一个事物与其他事物之间的相互依存性和关联性，是数据挖掘的一个重要技术，用于从大量数据中挖掘出有价值的数据项之间的相关关系。
+关联规则是反映一个事物与其他事物之间的相互依存性和关联性，是数据挖掘的一个重要技术，用于从大量数据中挖掘出有价值的数据项之间的相关关系。
 使用关联规则算法可以探究本数据中人口数据中各项指标的关联性，以及收入高低和其他因素的影响。
 
 为了探究各因素之间互相的关联，采用Apriori算法，结合数据实际，取最小支持度为0.12，最小置信度为0.2333，最小规则数为2，最大规则数为2。得到规则总共290条规则。
@@ -484,7 +484,7 @@ inspect(sort(adult.apriori.3,by="lift")[1:3])
 # [5] {marital_status=Single,sex=Male}           => {age=[17,31)}           0.1276208 0.7005732  0.1821663 2.166666  6233
 ```
 
-### kmeans
+### k-means（k均值聚类算法）
 
 k均值聚类算法（k-means clustering algorithm）是一种迭代求解的聚类分析算法，其步骤是，预将数据分为K组，则随机选取K个对象作为初始的聚类中心，然后计算每个对象与各个种子聚类中心之间的距离，把每个对象分配给距离它最近的聚类中心。聚类中心以及分配给它们的对象就代表一个聚类。每分配一个样本，聚类的聚类中心会根据聚类中现有的对象被重新计算。这个过程将不断重复直到满足某个终止条件。终止条件可以是没有（或最小数目）对象被重新分配给不同的聚类，没有（或最小数目）聚类中心再发生变化，误差平方和局部最小。
 
@@ -581,13 +581,55 @@ for (i in 1:4) {
 
 由上图我们可以把人口分为四类人群:
 
-group1的特征为，资本增值高，收入最高，人群年龄最高，主要以男性为主。
+group1的特征为，资本增值高，收入最高，人群年龄最高，工作时间最长，主要以男性为主。
 
-group2的特征为，年龄偏大，受教育水平高，收入高，主要以男性为主。
+group2的特征为，年龄偏大，受教育水平高，收入高，行业以政府部门为主，工作市场不高，主要以男性为主。
 
 group3的特征为，没有受到多少资本增值或损失的影响，各方面因素都很平衡，性别年龄分布比较均匀，同时收入也很中庸。
 
-group4的特征为，资本损失极大，收入堪忧的人群，行业以个体为主，性别以女性为主。
+group4的特征为，资本损失极大、行业以个体为主人群，收入及各项因素均偏低。且仅有这个群体婚姻状况不好。
+
+### EFA
+
+探索性因子分析(EFA)是一系列用来发现一组变量的潜在结构的方法。它通过寻找一组更小的、潜在的或隐藏的结构来解释已观测到的、显式的变量间的关系。
+
+探索性因子分析有助于建立新的假设。
+
+首先计算相关系数矩阵画出箱型图
+
+```R
+#data
+adult.efa.data <- as.data.frame(sapply(adult.data, as.numeric))
+adult.efa.data <- cor(adult.efa.data)
+boxplot(adult.efa.data)
+```
+
+![Adult-EFA-boxplot.png](README.assets/Adult-EFA-boxplot.png)
+
+判断需提取的公共因子数，生成含平行分析的碎石图。
+
+```R
+#best number of factor
+fa.parallel(adult.efa.data , n.obs = 240, fa = "both", n.iter = 100, main = "平行分析碎石图")
+```
+
+![Adult-EFA-scree.png](README.assets/Adult-EFA-scree.png)
+
+在尝试了最大相似法、主轴迭代法等方式后，选择使用加权最小二乘法提取公因子，并且不旋转因子。
+
+```R
+adult.efa.fa <- fa(correlations, nfactors = 3, rotate = "none", fm = "wls")
+adult.efa.fa
+fa.diagram(adult.efa.fa,simple = TRUE, digits = 3)
+```
+
+![Adult-EFA.png](README.assets/Adult-EFA.png)
+
+WLS2和WLS3并没有表现出与众多变量的相关性，故抛去。
+
+WLS1因子上age、marital_status、hours_per_week、sex、education_num、income载荷较大。初步认为可以将该因子命名为工作好坏因子。但因该因子对数据集的解释程度较低，无法用作降维，仅能用作对数据集隐式模式的探索。
+
+由上述分析可以得出，通过研究年龄、婚姻状态、每周工作时长、性别、教育水平、收入，可以衡量一个工作的好坏。
 
 ------
 
@@ -689,7 +731,7 @@ rpart.plot(adult.rpart)
 
 ![DecisionTree](README.assets/DecisionTree.png)
 
-上图是决策树剪枝前的图示，根部的这个节点上的 100%表示数据都还没有进行过分类。在观测数据内，婚姻状态为 `Divorced, Separated, Single, Widowed ` 同时收入小于 50K USD 的占总数的 53%
+上图是决策树剪枝前的图示，根部的这个节点上的 100%表示数据都还没有进行过分类。在观测数据内，婚姻状态为 `Divorced, Separated, Single, Widowed` 同时收入小于 50K USD 的占总数的 53%
 
 ```R
 adult.rpart.pred.prob <- predict(adult.rpart, select(adult.test, -income), type = 'prob')
@@ -910,7 +952,7 @@ sum(diag(adult.lda.pred.table))/sum(adult.lda.pred.table)
 
 朴素贝叶斯法是基于贝叶斯定理与特征条件独立假设的分类方法。对于给定的训练集数据，首先基于特征条件独立假设学习输入输出的联合概率分布；然后基于此模型，对给定的输入 x，利用贝叶斯定理求出后验概率最大的输出 y，朴素贝叶斯法实现简单，学习和预测效率都很高，是一种常用的方法。
 
-而其公式为 
+而其公式为
 $$
 y=f(x)=\mathop{\arg\max}_{c_k}\prod{P(X^{(j)}=x^{(j)}|Y=c_k)}
 $$
