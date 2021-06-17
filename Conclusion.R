@@ -41,7 +41,6 @@ adult.xgb.pr <- prediction(adult.xgb.pred.prob, adult.test$income)
 adult.xgb.prf <- performance(adult.xgb.pr, measure = "tpr", x.measure = "fpr")
 adult.xgb.dd <- data.frame(FP = adult.xgb.prf@x.values[[1]], TP = adult.xgb.prf@y.values[[1]])
 
-
 adult.roc <- ggplot() + 
   geom_line(data = adult.nn.dd, aes(x = FP, y = TP, color = 'Neural Networks')) + 
   geom_line(data = adult.cart.dd, aes(x = FP, y = TP, color = 'CART')) + 
