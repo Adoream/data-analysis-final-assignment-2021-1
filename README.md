@@ -25,7 +25,7 @@ native-country：表示样本来自哪个国家；
 income：样本的收入，这里的收入有大于50K和小于等于50K
 ```
 
--------
+------
 
 ## 数据预处理
 
@@ -481,6 +481,105 @@ inspect(sort(adult.apriori.3,by="lift")[1:3])
 # [4] {age=[17,31),native_country=United-States} => {marital_status=Single} 0.2075348 0.7173390  0.2893120 2.174051 10136
 # [5] {marital_status=Single,sex=Male}           => {age=[17,31)}           0.1276208 0.7005732  0.1821663 2.166666  6233
 ```
+
+### kmeans
+
+k均值聚类算法（k-means clustering algorithm）是一种迭代求解的聚类分析算法，其步骤是，预将数据分为K组，则随机选取K个对象作为初始的聚类中心，然后计算每个对象与各个种子聚类中心之间的距离，把每个对象分配给距离它最近的聚类中心。聚类中心以及分配给它们的对象就代表一个聚类。每分配一个样本，聚类的聚类中心会根据聚类中现有的对象被重新计算。这个过程将不断重复直到满足某个终止条件。终止条件可以是没有（或最小数目）对象被重新分配给不同的聚类，没有（或最小数目）聚类中心再发生变化，误差平方和局部最小。
+
+数据预处理后的数据仍有部分数据为因子类型，而kmean只能计算几何空间中的欧几里得距离，需要对所有数据进行数值化。依照上文分析所得的结论，按照每个因素对收入的影响进行数值化。以负面影响的因素数值小，正面影响的因素数值大的原则进行处理，并去除native_country变量。
+
+```R
+adult.kmeans.data <- adult.data
+adult.kmeans.data$native_country <- NULL
+G <- matrix(0,48840,1)
+  #workclass
+G[which(adult.kmeans.data$workclass=="Other/Unknown")] <- 0
+G[which(adult.kmeans.data$workclass=="Self-Employed")] <- 10
+G[which(adult.kmeans.data$workclass=="Government")] <- 20
+G[which(adult.kmeans.data$workclass=="Private")] <- 30
+adult.kmeans.data$workclass <- NULL
+adult.kmeans.data$workclass <- G
+  #marital_status
+G[which(adult.kmeans.data$marital_status=="Separated")] <- 0
+G[which(adult.kmeans.data$marital_status=="Widowed")] <- 10
+G[which(adult.kmeans.data$marital_status=="Single")] <- 20
+G[which(adult.kmeans.data$marital_status=="Divorced")] <- 30
+G[which(adult.kmeans.data$marital_status=="Married")] <- 40
+adult.kmeans.data$marital_status <- NULL
+adult.kmeans.data$marital_status <- G
+  #occupation
+G[which(adult.kmeans.data$occupation=="Other/Unknown")] <- 0
+G[which(adult.kmeans.data$occupation=="Service")] <- 10
+G[which(adult.kmeans.data$occupation=="Blue-Collar")] <- 20
+G[which(adult.kmeans.data$occupation=="Sales")] <- 30
+G[which(adult.kmeans.data$occupation=="White-Collar")] <- 40
+G[which(adult.kmeans.data$occupation=="Professional")] <- 50
+adult.kmeans.data$occupation <- NULL
+adult.kmeans.data$occupation <- G
+  #race
+G[which(adult.kmeans.data$race=="Other")] <- 0
+G[which(adult.kmeans.data$race=="Black")] <- 10
+G[which(adult.kmeans.data$race=="White")] <- 20
+G[which(adult.kmeans.data$race=="Black")] <- 30
+G[which(adult.kmeans.data$race=="Asian-Pac-Islander")] <- 40
+adult.kmeans.data$race <- NULL
+adult.kmeans.data$race <- G
+  #sex
+G[which(adult.kmeans.data$sex=="Female")] <- 0
+G[which(adult.kmeans.data$sex=="Male")] <- 10
+adult.kmeans.data$sex <- NULL
+adult.kmeans.data$sex <- G
+  #income
+G[which(adult.kmeans.data$income=="<=50K")] <- 0
+G[which(adult.kmeans.data$income==">50K")] <- 10
+adult.kmeans.data$income <- NULL
+adult.kmeans.data$income <- G
+```
+
+找出k-means最优的聚类数,画出折线图。
+
+```R
+#best number of group
+ #plot
+adult.kmeans.wss <- (nrow(adult.kmeans.data) - 1) * sum(apply(adult.kmeans.data, 2, var))
+for (i in 2:15) 
+  adult.kmeans.wss[i] <- sum(kmeans(adult.kmeans.data, centers = i)$withinss)
+plot(1:15, adult.kmeans.wss, type = "b", xlab = "Number of Clusters", ylab = "Within groups sum of squares")
+```
+
+![adult.kmeans.num.png](README.assets/adult.kmeans.num.png)
+
+按照聚类数为4，进行k-means聚类，画出分类图以及雷达图。
+
+```R
+#kmeans
+adult.kmeans <- kmeans(adult.kmeans.data, 4, nstart = 24)
+print(adult.kmeans)
+
+#kmeans-plot
+autoplot(adult.kmeans, data = adult.kmeans.data, label = TRUE,label.size = 3)
+
+#Radar Chart
+adult.kmeans.max <- apply(adult.kmeans$centers, 2, max)
+adult.kmeans.min <- apply(adult.kmeans$centers, 2, min)
+adult.kmeans.df <- data.frame(rbind(adult.kmeans.max, adult.kmeans.min, adult.kmeans$centers))
+radarchart(df = adult.kmeans.df, seg = 3, plty = 1:4, vlcex = 1, plwd = 3)
+L <- 1
+for (i in 1:4) {
+  legend(1.4,L,legend=paste("group",i),lty = i,lwd = 4,col=i,bty = "n")
+  L <- L-0.2
+}
+```
+
+![adult.kmeans.png](README.assets/adult.kmeans.png)
+
+![adult.kmeans.RadarChart.png](README.assets/adult.kmeans.RadarChart.png)
+
+由上图我们可以把人口分为四类人群。
+group1的特征为，资本增值高，收入最高，人群年龄最高，主要以男性为主。
+group2的特征为，年龄偏大，受教育水平高，收入高，主要以男性为主。
+group3的特征为，没有受到多少资本增值或损失的影响，各方面因素都很平衡，性别年龄分布比较均匀，同时收入也很中庸。
+group4的特征为，资本损失极大，收入堪忧的人群，行业以个体为主，性别以女性为主。
 
 ------
 
