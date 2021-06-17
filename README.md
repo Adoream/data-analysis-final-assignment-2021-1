@@ -399,23 +399,21 @@ adult.test <- adult.data[-adult.index, ]
 
 ------
 
-## 数据分析
-
 ### Apriori
 
 关联规则(Association Rules)是反映一个事物与其他事物之间的相互依存性和关联性，是数据挖掘的一个重要技术，用于从大量数据中挖掘出有价值的数据项之间的相关关系。
 使用关联规则算法可以探究本数据中人口数据中各项指标的关联性，以及收入高低和其他因素的影响。
 
-为了探究各因素之间互相的关联，采用Apriori算法，结合数据实际，取最小支持度为0.12，最小置信度为0.2333，最小规则数为2，最大规则数为2。得到规则总共292条规则
+为了探究各因素之间互相的关联，采用Apriori算法，结合数据实际，取最小支持度为0.12，最小置信度为0.2333，最小规则数为2，最大规则数为2。得到规则总共290条规则。
 对提升度进行排序，展示其中最高的10条规则。如下所示，我们可以得到几条关联。
-幼年个体没有婚配关系。有婚配关系的个体收入较高。
-女性的每周工作时间偏低。教育经历在15、16年的人群偏好蓝领成为蓝领。
-教育经历在5到15年之间人更有可能获取高收入。
+单身的人更可能处于17至31岁。有婚配关系的个体更可能有收入较高。
+女性的每周工作时间更容易偏低。教育经历在9、10年的人群更可能成为蓝领。
+教育经历在10到16年之间人更有可能获取高收入。
 
 ```R
 #aporiori for maxlen = 2
 adult.apriori.2 <- apriori(data = adult.data, parameter = list(support = 0.12, confidence = 0.2333, minlen = 2, maxlen = 2))
-summary(adult.apriori)
+summary(adult.apriori.2)
 
 #show lift TOP10
 inspect(sort(adult.apriori,by="lift")[1:10])
@@ -423,19 +421,48 @@ inspect(sort(adult.apriori,by="lift")[1:10])
 
 ```R
 #      lhs                         rhs                      support   confidence coverage  lift     count
-# [1]  {marital_status=Single}  => {age=[1,15)}             0.2310606 0.7002792  0.3299550 2.165757 11285
-# [2]  {age=[1,15)}             => {marital_status=Single}  0.2310606 0.7146023  0.3233415 2.165757 11285
+# [1]  {marital_status=Single}  => {age=[17,31)}            0.2310606 0.7002792  0.3299550 2.165757 11285
+# [2]  {age=[17,31)}            => {marital_status=Single}  0.2310606 0.7146023  0.3233415 2.165757 11285
 # [3]  {income=>50K}            => {marital_status=Married} 0.2058968 0.8604432  0.2392916 1.823644 10056
 # [4]  {marital_status=Married} => {income=>50K}            0.2058968 0.4363826  0.4718264 1.823644 10056
-# [5]  {hours_per_week=[1,35)}  => {sex=Female}             0.1214169 0.5289920  0.2295250 1.595601  5930
-# [6]  {sex=Female}             => {hours_per_week=[1,35)}  0.1214169 0.3662302  0.3315315 1.595601  5930
-# [7]  {occupation=Blue-Collar} => {education_num=[15,16]}  0.1530303 0.4966113  0.3081491 1.475245  7474
-# [8]  {education_num=[15,16]}  => {occupation=Blue-Collar} 0.1530303 0.4545952  0.3366298 1.475245  7474
-# [9]  {income=>50K}            => {education_num=[5,15)}   0.1256552 0.5251134  0.2392916 1.442762  6137
-# [10] {education_num=[5,15)}   => {income=>50K}            0.1256552 0.3452408  0.3639640 1.442762  6137
+# [5]  {hours_per_week=[1,40)}  => {sex=Female}             0.1267199 0.5295628  0.2392916 1.597322  6189
+# [6]  {sex=Female}             => {hours_per_week=[1,40)}  0.1267199 0.3822258  0.3315315 1.597322  6189
+# [7]  {occupation=Blue-Collar} => {education_num=[9,10)}   0.1470311 0.4771429  0.3081491 1.476410  7181
+# [8]  {education_num=[9,10)}   => {occupation=Blue-Collar} 0.1470311 0.4549544  0.3231777 1.476410  7181
+# [9]  {income=>50K}            => {education_num=[10,16]}  0.1805487 0.7545136  0.2392916 1.382808  8818
+# [10] {education_num=[10,16]}  => {income=>50K}            0.1805487 0.3308942  0.5456388 1.382808  8818
 ```
 
-如下所示,对Apriori的参数进行修改，将最大规则数改为3。展示提升度最高的3条规则。可以得知幼年人类个体既无婚配关系，也无较高收入。
+在数据集寻找有关收入高低的关联规则。
+首先寻找有关高收入的关联规则
+
+```R
+#about high income
+adult.apriori.highIncome <- subset(adult.apriori.2, rhs %in% c("income=>50K"))
+inspect(sort(adult.apriori.highIncome,by="lift")[1:5])
+plot(sort(adult.apriori.highIncome,by="lift")[1:5], method = "group")
+```
+
+![Adult-apriori-highIncome.png](README.assets/Adult-apriori-highIncome.png)
+
+如图所示，具备以下因素的人很可能有高收入。婚姻状态为已婚，教育经历高于10年，性别为男性，每周工作时间较长，人种为白人。
+
+再寻找低收入关联的因素进行分析。
+
+```R
+adult.apriori.lowIncome <- subset(adult.apriori.2, rhs %in% c("income=<=50K"))
+inspect(sort(adult.apriori.lowIncome,by="lift")[1:5])
+plot(sort(adult.apriori.lowIncome,by="lift")[1:5], method = "group")
+```
+
+![Adult-apriori-lowIncome.png](README.assets/Adult-apriori-lowIncome.png)
+
+可以分析得到，具备以下因素的人很有可能收入较低。婚姻关系为单身或离异，教育经历少于9年，每周较短的工作时间，年龄低于31岁。
+
+对数据集进行修改，去除收入变量。
+将最大规则数改为3。展示提升度最高的5条规则。
+如下所示，我们可以得知。
+高学历群体在31岁前有很高的可能未婚。单身白种人很可能属于年青群体。工作为个体的单身年轻人很可能未婚祖国为美国的17到31的人很可能是单身。单身男性很可能是17到31岁。
 
 ```R
 #aporiori for maxlen = 3
@@ -447,37 +474,13 @@ inspect(sort(adult.apriori.3,by="lift")[1:3])
 ```
 
 ```R
-#     lhs                                          rhs                     support   confidence coverage  lift     count
-# [1] {age=[1,15),income=<=50K}                 => {marital_status=Single} 0.2272523 0.7499831  0.3030098 2.272986 11099
-# [2] {marital_status=Single,income=<=50K}      => {age=[1,15)}            0.2272523 0.7215577  0.3149468 2.231565 11099
-# [3] {workclass=Private,marital_status=Single} => {age=[1,15)}            0.1804464 0.7198987  0.2506552 2.226434  8813
+#     lhs                                           rhs                     support   confidence coverage  lift     count
+# [1] {age=[17,31),education_num=[10,16]}        => {marital_status=Single} 0.1277437 0.7413260  0.1723178 2.246749  6239
+# [2] {workclass=Private,marital_status=Single}  => {age=[17,31)}           0.1804464 0.7198987  0.2506552 2.226434  8813
+# [3] {marital_status=Single,race=White}         => {age=[17,31)}           0.1932228 0.7140047  0.2706183 2.208206  9437
+# [4] {age=[17,31),native_country=United-States} => {marital_status=Single} 0.2075348 0.7173390  0.2893120 2.174051 10136
+# [5] {marital_status=Single,sex=Male}           => {age=[17,31)}           0.1276208 0.7005732  0.1821663 2.166666  6233
 ```
-
-已知，幼年个体收入收入较低，故下述研究排除幼年个体，对成年个体进行关联规则分析。
-首先与高收入关联的因素进行分析。
-
-```R
-#about high income
-adult.apriori.highIncome <- subset(adult.apriori.2, rhs %in% c("income=>50K"))
-adult.apriori.highIncome <- subset(adult.apriori.highIncome, subset = !(lhs %in% c("age=[1,15)")))
-plot(sort(adult.apriori.highIncome,by="lift")[1:5], method = "group")
-```
-
-![Adult-apriori-highIncome.png](README.assets/Adult-apriori-highIncome.png)
-
-如图所示，以下几种因素与高收入高度相关。婚姻关系为已婚，高于5年的教育经历，性别为男性，每周的工作时间较长，人种为白人。
-
-再对低收入关联的因素进行分析。
-
-```R
-adult.apriori.lowIncome <- subset(adult.apriori.2, rhs %in% c("income=<=50K"))
-adult.apriori.lowIncome <- subset(adult.apriori.lowIncome, subset = !(lhs %in% c("age=[1,15)")))
-plot(sort(adult.apriori.lowIncome,by="lift")[1:5], method = "group")
-```
-
-![Adult-apriori-lowIncome.png](README.assets/Adult-apriori-lowIncome.png)
-
-可以分析得到，以下几种因素与高收入高度相关。婚姻关系为单身，每周较短的工作时间，婚姻关系为离婚，性别为女性，工作为服务业。
 
 ------
 
