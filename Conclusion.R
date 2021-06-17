@@ -17,9 +17,9 @@ adult.rf.prf <- performance(adult.rf.pr, measure = "tpr", x.measure = "fpr")
 adult.rf.dd <- data.frame(FP = adult.rf.prf@x.values[[1]], TP = adult.rf.prf@y.values[[1]])
 
 # SVM
-adult.svm.pr <- prediction(adult.svm.pred.prob, adult.test$income)
-adult.svm.prf <- performance(adult.svm.pr, measure = "tpr", x.measure = "fpr")
-adult.svm.dd <- data.frame(FP = adult.svm.prf@x.values[[1]], TP = adult.svm.prf@y.values[[1]])
+adult.svm.pr <- adult.svm.radial.pr
+adult.svm.prf <- adult.svm.radial.prf
+adult.svm.dd <- adult.svm.radial.dd
 
 # C50
 adult.c50.pr <- prediction(adult.c50.pred.prob[, 2], adult.test$income)
