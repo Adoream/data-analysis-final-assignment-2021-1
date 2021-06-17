@@ -706,9 +706,9 @@ sum(diag(adult.lda.pred.table))/sum(adult.lda.pred.table)
 ```
 
 ```R
-adult.nb.pred <=50K  >50K
-        <=50K 10206   944
-        >50K   1565  1937
+# adult.nb.pred <=50K  >50K
+#         <=50K 10206   944
+#         >50K   1565  1937
 ```
 
 线性判别分析的预测结果准确率为82.9%，错误率为17.1%。
