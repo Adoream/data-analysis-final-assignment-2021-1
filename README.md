@@ -692,6 +692,27 @@ sum(diag(adult.knn.pred.table))/sum(adult.knn.pred.table)
 
 K-近邻算法的预测结果准确率为 `84.09%`，错误率为 `15.91%`。
 
+### LDA
+
+线性判别分析是对费舍尔的线性鉴别方法的归纳，这种方法使用统计学，模式识别和机器学习方法，试图找到两类物体或事件的特征的一个线性组合，以能够特征化或区分它们。所得的组合可用来作为一个线性分类器，或者，更常见的是，为后续的分类做降维处理。
+
+```R
+library(MASS)
+adult.lda <- lda(income ~ ., data = adult.data)
+summary(adult.lda)
+adult.lda.pred <- predict(adult.lda,adult.test)
+adult.lda.pred.table <- table(adult.test$income, adult.lda.pred$class)
+sum(diag(adult.lda.pred.table))/sum(adult.lda.pred.table)
+```
+
+```R
+adult.nb.pred <=50K  >50K
+        <=50K 10206   944
+        >50K   1565  1937
+```
+
+线性判别分析的预测结果准确率为82.9%，错误率为17.1%。
+
 ### Naive Bayes（朴素贝叶斯）
 
 朴素贝叶斯法是基于贝叶斯定理与特征条件独立假设的分类方法。对于给定的训练集数据，首先基于特征条件独立假设学习输入输出的联合概率分布；然后基于此模型，对给定的输入 x，利用贝叶斯定理求出后验概率最大的输出 y，朴素贝叶斯法实现简单，学习和预测效率都很高，是一种常用的方法。
