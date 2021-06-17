@@ -493,13 +493,18 @@ library(rpart.plot)
 
 adult.rpart <- rpart(income ~ ., data = adult.train, method = 'class')
 rpart.plot(adult.rpart)
+```
+
+![DecisionTree](README.assets/DecisionTree.png)
+
+上图是决策树剪枝前的图示，根部的这个节点上的 100%表示数据都还没有进行过分类。在观测数据内，婚姻状态为 `Divorced, Separated, Single, Widowed ` 同时收入小于 50K USD 的占总数的 53%
+
+```R
 adult.rpart.pred.prob <- predict(adult.rpart, select(adult.test, -income), type = 'prob')
 adult.rpart.pred <- predict(adult.rpart, select(adult.test, -income), type = 'class')
 adult.rpart.pred.table <- table(adult.rpart.pred, adult.test$income)
 sum(diag(adult.rpart.pred.table))/sum(adult.rpart.pred.table)
 ```
-
-![DecisionTree](README.assets/DecisionTree.png)
 
 ```R
 # adult.rpart.pred <=50K  >50K
@@ -562,17 +567,74 @@ sum(diag(adult.rf.pred.table))/sum(adult.rf.pred.table)
 
 然后使用支持向量机（SVM）来预测收入水平。 SVM 是一种判别分类器，它在用于分类的高维空间中构造超平面。
 
+AUC 被定义为 ROC 曲线下与坐标轴围成的面积。AUC 越接近 1.0，检测方法的真实性越高；等于0.5时，则真实度越低，无应用价值。
+
 ```R
 library(e1071)
 
-adult.svm <- svm(income ~ ., data = adult.train, decision.values = TRUE)
-adult.svm.pred.prob <- attributes(predict(adult.svm, select(adult.test, -income), decision.values = TRUE))$decision.values
-adult.svm.pred <- predict(adult.svm, select(adult.test, -income))
-adult.svm.pred.table <- table(adult.svm.pred, adult.test$income)
-sum(diag(adult.svm.pred.table))/sum(adult.svm.pred.table)
+adult.svm.linear <- svm(income ~ ., data = adult.train, decision.values = TRUE, kernel = 'linear')
+adult.svm.linear.pred.prob <- attributes(predict(adult.svm.linear, select(adult.test, -income), decision.values = TRUE))$decision.values
+adult.svm.linear.pr <- prediction(adult.svm.linear.pred.prob, adult.test$income)
+adult.svm.linear.prf <- performance(adult.svm.linear.pr, measure = "tpr", x.measure = "fpr")
+adult.svm.linear.dd <- data.frame(FP = adult.svm.linear.prf@x.values[[1]], TP = adult.svm.linear.prf@y.values[[1]])
+
+adult.svm.polynomial <- svm(income ~ ., data = adult.train, decision.values = TRUE, kernel = 'polynomial')
+adult.svm.polynomial.pred.prob <- attributes(predict(adult.svm.polynomial, select(adult.test, -income), decision.values = TRUE))$decision.values
+adult.svm.polynomial.pr <- prediction(adult.svm.polynomial.pred.prob, adult.test$income)
+adult.svm.polynomial.prf <- performance(adult.svm.polynomial.pr, measure = "tpr", x.measure = "fpr")
+adult.svm.polynomial.dd <- data.frame(FP = adult.svm.polynomial.prf@x.values[[1]], TP = adult.svm.polynomial.prf@y.values[[1]])
+
+adult.svm.radial <- svm(income ~ ., data = adult.train, decision.values = TRUE, kernel = 'radial')
+adult.svm.radial.pred.prob <- attributes(predict(adult.svm.radial, select(adult.test, -income), decision.values = TRUE))$decision.values
+adult.svm.radial.pr <- prediction(adult.svm.radial.pred.prob, adult.test$income)
+adult.svm.radial.prf <- performance(adult.svm.radial.pr, measure = "tpr", x.measure = "fpr")
+adult.svm.radial.dd <- data.frame(FP = adult.svm.radial.prf@x.values[[1]], TP = adult.svm.radial.prf@y.values[[1]])
+
+
+adult.svm.sigmoid <- svm(income ~ ., data = adult.train, decision.values = TRUE, kernel = 'sigmoid')
+adult.svm.sigmoid.pred.prob <- attributes(predict(adult.svm.sigmoid, select(adult.test, -income), decision.values = TRUE))$decision.values
+adult.svm.sigmoid.pr <- prediction(adult.svm.sigmoid.pred.prob, adult.test$income)
+adult.svm.sigmoid.prf <- performance(adult.svm.sigmoid.pr, measure = "tpr", x.measure = "fpr")
+adult.svm.sigmoid.dd <- data.frame(FP = adult.svm.sigmoid.prf@x.values[[1]], TP = adult.svm.sigmoid.prf@y.values[[1]])
+
+adult.roc <- ggplot() + 
+  geom_line(data = adult.svm.linear.dd, aes(x = FP, y = TP, color = 'SVM - Linear')) + 
+  geom_line(data = adult.svm.polynomial.dd, aes(x = FP, y = TP, color = 'SVM - Polynomial')) + 
+  geom_line(data = adult.svm.radial.dd, aes(x = FP, y = TP, color = 'SVM - Radial')) +
+  geom_line(data = adult.svm.sigmoid.dd, aes(x = FP, y = TP, color = 'SVM - Sigmoid')) +
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1)) +
+  ggtitle('ROC Curve') + 
+  labs(x = 'False Positive Rate', y = 'True Positive Rate') 
+
+adult.roc + scale_colour_manual(name = 'Classifier', values = c(
+  'SVM - Linear' = '#F4A8D7', 
+  'SVM - Polynomial' = '#DEB8EE',
+  'SVM - Radial' = '#BEC8FC', 
+  'SVM - Sigmoid' = '#98D9FF'
+))
+
+adult.auc <- rbind(performance(adult.svm.linear.pr, measure = 'auc')@y.values[[1]],
+                   performance(adult.svm.polynomial.pr, measure = 'auc')@y.values[[1]],
+                   performance(adult.svm.radial.pr, measure = 'auc')@y.values[[1]],
+                   performance(adult.svm.sigmoid.pr, measure = 'auc')@y.values[[1]])
+rownames(adult.auc) <- (c('SVM - Linear', 'SVM - Polynomial', 'SVM - Radial', 'SVM - Sigmoid'))
+colnames(adult.auc) <- 'Area Under ROC Curve'
+round(adult.auc, 4)
+```
+
+我们通过切换不同的内核，并画出 ROC 曲线同时计算 AUC，得出在使用 `radial` 时所得到的准确度是是最高。
+
+因此使用 `radial` 进行预测
+
+```R
+adult.svm.radial.pred <- predict(adult.svm.radial, select(adult.test, -income))
+adult.svm.radial.pred.table <- table(adult.svm.radial.pred, adult.test$income)
+sum(diag(adult.svm.radial.pred.table))/sum(adult.svm.radial.pred.table)
 ```
 
 ```R
+
+
 # adult.svm.pred <=50K  >50K
 #         <=50K 10300  1520
 #         >50K    850  1982
@@ -613,7 +675,20 @@ ggplot(data.frame(1:50, adult.knn.numeric[1:50]), aes(x = 1:50, y = adult.knn.nu
 
 ![Adult-knn-numeric.png](README.assets/Adult-knn-numeric.png)
 
-从上图可以看出当 `K = 50` 时，所预测的结果为最佳
+从上图可以看出当 `K = 50` 时，所预测的结果为最佳，因此
+
+```R
+adult.knn <- kknn(income ~ ., train = adult.train, test = adult.test, k = 50, distance = 2)
+adult.knn.pred <- fitted(adult.knn)
+adult.knn.pred.table <- table(adult.knn.pred, adult.test$income)
+sum(diag(adult.knn.pred.table))/sum(adult.knn.pred.table)
+```
+
+```R
+# adult.knn.pred <=50K  >50K
+#          <=50K 10288  1469
+#          >50K    862  2033
+```
 
 K-近邻算法的预测结果准确率为 `84.09%`，错误率为 `15.91%`。
 
@@ -728,7 +803,6 @@ adult.xgb.pr <- prediction(adult.xgb.pred.prob, adult.test$income)
 adult.xgb.prf <- performance(adult.xgb.pr, measure = "tpr", x.measure = "fpr")
 adult.xgb.dd <- data.frame(FP = adult.xgb.prf@x.values[[1]], TP = adult.xgb.prf@y.values[[1]])
 
-
 adult.roc <- ggplot() + 
   geom_line(data = adult.nn.dd, aes(x = FP, y = TP, color = 'Neural Networks')) + 
   geom_line(data = adult.cart.dd, aes(x = FP, y = TP, color = 'CART')) + 
@@ -784,6 +858,4 @@ round(adult.auc, 4)
 # XGBoost                              0.9232
 ```
 
-AUC 被定义为 ROC 曲线下与坐标轴围成的面积。AUC 越接近 1.0，检测方法的真实性越高；等于0.5时，则真实度越低，无应用价值。
-
-所以可以得出 XGBoost 算法的的真实性最好，Naive Bayes 的真实性最差
+通过计算 AUC 所以可以得出 XGBoost 算法的的真实性最好，Naive Bayes 的真实性最差
