@@ -907,6 +907,11 @@ adult.xgb.pr <- prediction(adult.xgb.pred.prob, adult.test$income)
 adult.xgb.prf <- performance(adult.xgb.pr, measure = "tpr", x.measure = "fpr")
 adult.xgb.dd <- data.frame(FP = adult.xgb.prf@x.values[[1]], TP = adult.xgb.prf@y.values[[1]])
 
+# LDA
+adult.lda.pr <- prediction(as.numeric(adult.lda.pred$x), adult.test$income)
+adult.lda.prf <- performance(adult.lda.pr, measure = "tpr", x.measure = "fpr")
+adult.lda.dd <- data.frame(FP = adult.lda.prf@x.values[[1]], TP = adult.lda.prf@y.values[[1]])
+
 adult.roc <- ggplot() + 
   geom_line(data = adult.nn.dd, aes(x = FP, y = TP, color = 'Neural Networks')) + 
   geom_line(data = adult.cart.dd, aes(x = FP, y = TP, color = 'CART')) + 
@@ -916,6 +921,7 @@ adult.roc <- ggplot() +
   geom_line(data = adult.knn.dd, aes(x = FP, y = TP, color = 'K-Nearest Neighbors')) +
   geom_line(data = adult.nb.dd, aes(x = FP, y = TP, color = 'Naive Bayes')) +
   geom_line(data = adult.xgb.dd, aes(x = FP, y = TP, color = 'XGBoost')) +
+  geom_line(data = adult.lda.dd, aes(x = FP, y = TP, color = 'LDA')) +
   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1)) +
   ggtitle('ROC Curve') + 
   labs(x = 'False Positive Rate', y = 'True Positive Rate') 
@@ -928,7 +934,8 @@ adult.roc + scale_colour_manual(name = 'Classifier', values = c(
   'C5.0 Classification' = '#70E4FA',
   'K-Nearest Neighbors' = '#59EEE7',
   'Naive Bayes' = '#69F6CF',
-  'XGBoost' = '#8EF9B0'
+  'XGBoost' = '#8EF9B0',
+  'LDA' = '#E2FB75'
 ))
 ```
 
@@ -942,10 +949,11 @@ adult.auc <- rbind(performance(adult.nn.pr, measure = 'auc')@y.values[[1]],
              performance(adult.c50.pr, measure = 'auc')@y.values[[1]],
              performance(adult.knn.pr, measure = 'auc')@y.values[[1]],
              performance(adult.nb.pr, measure = 'auc')@y.values[[1]],
-             performance(adult.xgb.pr, measure = 'auc')@y.values[[1]])
+             performance(adult.xgb.pr, measure = 'auc')@y.values[[1]],
+             performance(adult.lda.pr, measure = 'auc')@y.values[[1]])
 rownames(adult.auc) <- (c('Neural Networks', 'Decision Tree', 'Random Forest',
                     'Support Vector Machine', 'C5.0 Classification', 
-                    'K-Nearest Neighbors', 'Naive Bayes', 'XGBoost'))
+                    'K-Nearest Neighbors', 'Naive Bayes', 'XGBoost', 'LDA'))
 colnames(adult.auc) <- 'Area Under ROC Curve'
 round(adult.auc, 4)
 ```
@@ -960,6 +968,7 @@ round(adult.auc, 4)
 # K-Nearest Neighbors                  0.7419
 # Naive Bayes                          0.6700
 # XGBoost                              0.9232
+# LDA                                  0.8741
 ```
 
 通过计算 AUC 所以可以得出 XGBoost 算法的的真实性最好，Naive Bayes 的真实性最差
