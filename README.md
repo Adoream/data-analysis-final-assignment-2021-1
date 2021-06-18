@@ -923,7 +923,7 @@ ggplot(data.frame(1:50, adult.knn.numeric[1:50]), aes(x = 1:50, y = adult.knn.nu
 
 ![Adult-knn-numeric.png](README.assets/Adult-knn-numeric.png)
 
-从上图可以看出当 `K = 50` 时，所预测的结果为最佳，因此
+从上图可以看出当 `K = 50` 时，所预测的结果为最佳，因此使用  `K = 50`  进行预测。
 
 ```R
 adult.knn <- kknn(income ~ ., train = adult.train, test = adult.test, k = 50, distance = 2)
@@ -990,7 +990,7 @@ sum(diag(adult.nb.pred.table))/sum(adult.nb.pred.table)
 
 ### XGBoost
 
-XGboost 全名为 eXtreme Gradient Boosting (极限梯度提升)，XGBoost 主要是用来解决有监督学习问题
+XGboost 全名为 eXtreme Gradient Boosting (极限梯度提升)，XGBoost 主要是用来解决有监督学习问题。这个算法的基础学习器为决策树，但是其本质还是在 GBDT 的基础上进行改进，使之更强大，适用于更大范围。GBDT是把所有树的结论累加起来做最终结论的。GBDT的核心就在于，每一棵树学的是之前所有树结论和的残差（负梯度），这个残差就是一个加预测值后能得到真实值的累加量。
 
 ```R
 library(Matrix)
