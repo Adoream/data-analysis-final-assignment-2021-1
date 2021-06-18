@@ -2,7 +2,7 @@
 
 ## 前言
 
-成人数据集来自于 1994 年人口普查数据库，此数据集可在 [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Adult) 中找到。此次作业主要了解如何使用此数据集中的变量来预测个人的年收入是否超过 USD 50K。这个问题的结果是二元的，主要通过 8 种方法进行检查。
+成人数据集来自于 1994 年人口普查数据库，此数据集可在 [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Adult) 中找到。本次作业的目标是，找出数据集中隐藏的模式和使用此数据集中的变量来预测个人的年收入是否超过 USD 50K。
 
 ------
 
@@ -399,7 +399,7 @@ adult.test <- adult.data[-adult.index, ]
 
 ------
 
-## 数据分析
+## 寻找数据中隐藏的模式
 
 ### Association Rules（关联规则）
 
@@ -635,11 +635,11 @@ WLS1因子上age、marital_status、hours_per_week、sex、education_num、incom
 
 ------
 
-## 模型训练
+## 模型训练和数据预测
 
 ### ANN
 
-首先先使用 ANN 来预测的年收入是否超过 50K USD， 模型在训练集上训练并在测试集上验证。首先，训练具有一个隐藏层的人工神经网络 (ANN)。 尽管只有 11 个输入变量，但其中许多是分类变量，会产生较多虚变量。 因此，隐藏节点的数量选择为 40，最小二乘法用于优化目标函数，最大迭代次数设置为 5,000。
+  首先先使用 ANN 来预测的年收入是否超过 50K USD， 模型在训练集上训练并在测试集上验证。首先，训练具有一个隐藏层的人工神经网络 (ANN)。 尽管只有 11 个输入变量，但其中许多是分类变量，会产生较多虚变量。 因此，隐藏节点的数量选择为 40，最小二乘法用于优化目标函数，最大迭代次数设置为 5,000。
 
 ```R
 library(nnet)
@@ -780,10 +780,33 @@ C5.0 算法的预测结果准确率为 `86.30%`，错误率为 `13.70%`。
 
 随机森林 (RF) 是一个强大的机器学习工具，它通过生成大量自举树来提高预测准确性，最终预测结果是通过组合所有树的结果来获得的。
 
+确定最优决策树节点分支所选择的变量个数，确定决策树的数量。
+
+```R
+#best number of mtry
+n <- length(names(adult.train))
+rate <- 1
+for(i in 1:10){
+  set.seed(2333)
+  adult.rf.test <- randomForest(income ~ ., data = adult.train, mtry = i, ntree=500)
+  rate[i]<-mean(adult.rf.test$err.rate)
+}
+rate
+
+#best number of ntree
+set.seed(2333)
+adult.rf.test<-randomForest(income~., data=adult.train, mtry=3, ntree=1000)
+plot(adult.rf.test)
+legend(800,0.02, "IS_LIUSHI=0", cex=0.9, bty="n")    
+legend(800,0.0245, "total", cex=0.09, bty="n")
+```
+
+使用mtry=3, ntree=500为参数训练随机森林模型
+
 ```R
 library(randomForest)
 
-adult.rf <- randomForest(income ~ ., data = adult.train, ntree = 1000)
+adult.rf <- randomForest(income ~ ., data = adult.train, mtry=3, ntree=500)
 varImpPlot(adult.rf)
 adult.rf.pred.prob <- predict(adult.rf, select(adult.test, -income), type = 'prob')
 adult.rf.pred <- predict(adult.rf, select(adult.test, -income), type = 'class')
@@ -1034,7 +1057,7 @@ XGBoost 的预测结果准确率为 `86.56%`，错误率为 `13.44%`。
 
 ## 结论
 
-ROC 曲线是在所有阈值下真阳性率与假阳性率的关系图。使用 ROC 曲线比较五个不同的分类器。
+ROC 曲线是在所有阈值下真阳性率与假阳性率的关系图。使用 ROC 曲线比较九个不同的分类器。
 
 ```R
 library(plyr)
