@@ -1,6 +1,8 @@
 library(nnet)
+library(NeuralNetTools)
 
 adult.nn <- nnet(income ~ ., data = adult.train, size = 40, maxit = 500, MaxNWts = 2601)
+plotnet(adult.nn)
 adult.nn.pred <- predict(adult.nn, select(adult.test, -income), type = 'raw')
 adult.nn.pred.tr <- rep('<=50K', length(adult.nn.pred))
 adult.nn.pred.tr[adult.nn.pred.tr >= .5] <- '>50K'
