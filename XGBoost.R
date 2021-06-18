@@ -1,5 +1,6 @@
 library(Matrix)
 library(xgboost)
+library(DiagrammeR)
 
 adult.xgb.matrix.train <- sparse.model.matrix(income ~ ., data = adult.train)
 adult.xgb.matrix.train.Y <- as.numeric(adult.train$income) - 1
@@ -16,8 +17,8 @@ adult.xgb <- xgboost(
   nround = 100,
   objective = "binary:logistic"
 )
+xgb.plot.tree(model = adult.xgb, trees = 1)
 adult.xgb.pred.prob <- predict(adult.xgb, adult.xgb.matrix.test, type = 'prob')
 adult.xgb.pred <- predict(adult.xgb, adult.xgb.matrix.test)
 adult.xgb.pred.table <- table(ifelse(adult.xgb.pred > 0.5, 1, 0), as.numeric(na.omit(adult.test)$income))
 sum(diag(adult.xgb.pred.table))/sum(adult.xgb.pred.table)
-
