@@ -399,6 +399,8 @@ adult.test <- adult.data[-adult.index, ]
 
 ------
 
+## 数据分析
+
 ### Association Rules（关联规则）
 
 关联规则是反映一个事物与其他事物之间的相互依存性和关联性，是数据挖掘的一个重要技术，用于从大量数据中挖掘出有价值的数据项之间的相关关系。
@@ -641,7 +643,9 @@ WLS1因子上age、marital_status、hours_per_week、sex、education_num、incom
 
 ```R
 library(nnet)
+library(NeuralNetTools)
 adult.nn <- nnet(income ~ ., data = adult.train, size = 40, maxit = 500, MaxNWts = 2601)
+plotnet(adult.nn)
 ```
 
 ```R
@@ -700,6 +704,8 @@ adult.nn <- nnet(income ~ ., data = adult.train, size = 40, maxit = 500, MaxNWts
 # final  value 9767.999631 
 # stopped after 500 iterations
 ```
+
+![adult.nn](README.assets/adult.nn.png)
 
 ```R
 adult.nn.pred <- predict(adult.nn, select(adult.test, -income), type = 'raw')
@@ -787,7 +793,7 @@ sum(diag(adult.rf.pred.table))/sum(adult.rf.pred.table)
 
 ![adult.rf](README.assets/adult.rf.png)
 
-上图显示的是平均减少的准确率，其中每个点即代表移除相应的特征后平均减少的准确率，故越高的变量越重要。不难看出，marital_status(婚姻状况)、age(年龄)较为重要。
+上图显示的是平均减少的准确率，其中每个点即代表移除相应的特征后平均减少的准确率，故越高的变量越重要。不难看出，marital_status(婚姻状况)、age(年龄)、education_num(受教育年限)较为重要。
 
 ```R
 # adult.rf.pred <=50K  >50K
@@ -856,9 +862,19 @@ colnames(adult.auc) <- 'Area Under ROC Curve'
 round(adult.auc, 4)
 ```
 
-我们通过切换不同的内核，并画出 ROC 曲线同时计算 AUC，得出在使用 `radial` 时所得到的准确度是是最高。
+我们通过切换不同的内核，并画出 ROC 曲线同时计算 AUC。
 
-因此使用 `radial` 进行预测
+![ROC-Curve-SVM](README.assets/ROC-Curve-SVM.png)
+
+```R
+#                  Area Under ROC Curve
+# SVM - Linear                   0.8665
+# SVM - Polynomial               0.8626
+# SVM - Radial                   0.8816
+# SVM - Sigmoid                  0.8397
+```
+
+根据结果可以得出在使用 `radial` 时所得到的准确度是是最高，因此使用 `radial` 进行预测
 
 ```R
 adult.svm.radial.pred <- predict(adult.svm.radial, select(adult.test, -income))
@@ -867,11 +883,9 @@ sum(diag(adult.svm.radial.pred.table))/sum(adult.svm.radial.pred.table)
 ```
 
 ```R
-
-
 # adult.svm.pred <=50K  >50K
-#         <=50K 10300  1520
-#         >50K    850  1982
+#          <=50K 10300  1520
+#          >50K    850  1982
 ```
 
 支持向量机的预测结果准确率为 `83.82%`，错误率为 `16.18%`。
@@ -891,8 +905,8 @@ sum(diag(adult.knn.pred.table))/sum(adult.knn.pred.table)
 
 ```R
 # adult.svm.pred <=50K  >50K
-#         <=50K 10300  1520
-#         >50K    850  1982
+#          <=50K 10300  1520
+#          >50K    850  1982
 ```
 
 ```R
@@ -981,6 +995,7 @@ XGboost 全名为 eXtreme Gradient Boosting (极限梯度提升)，XGBoost 主�
 ```R
 library(Matrix)
 library(xgboost)
+library(DiagrammeR)
 
 adult.xgb.matrix.train <- sparse.model.matrix(income ~ ., data = adult.train)
 adult.xgb.matrix.train.Y <- as.numeric(adult.train$income) - 1
@@ -997,6 +1012,12 @@ adult.xgb <- xgboost(
   nround = 100,
   objective = "binary:logistic"
 )
+xgb.plot.tree(model = adult.xgb, trees = 1)
+```
+
+![adult.xgb](README.assets/adult.xgb.png)
+
+```R
 adult.xgb.pred.prob <- predict(adult.xgb, adult.xgb.matrix.test, type = 'prob')
 adult.xgb.pred <- predict(adult.xgb, adult.xgb.matrix.test)
 adult.xgb.pred.table <- table(ifelse(adult.xgb.pred > 0.5, 1, 0), as.numeric(na.omit(adult.test)$income))
