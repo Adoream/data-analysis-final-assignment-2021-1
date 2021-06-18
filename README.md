@@ -4,7 +4,6 @@
 
 成人数据集来自于 1994 年人口普查数据库，此数据集可在 [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Adult) 中找到。本次作业的目标是，找出数据集中隐藏的模式和使用此数据集中的变量来预测个人的年收入是否超过 USD 50K。
 
-
 ------
 
 ## 数据集介绍
